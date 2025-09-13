@@ -137,51 +137,54 @@ export const Planner: React.FC<PlannerProps> = ({ onComplete }) => {
       {/* Date Picker */}
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-gray-700 mb-3">1. Pick a day</h3>
-        <div className="bg-white p-4 rounded-lg shadow-inner">
-            <div className="flex justify-between items-center mb-2">
+        <div className="bg-white p-4 rounded-xl shadow-md">
+            <div className="flex justify-between items-center mb-4">
                 <button
                   onClick={handlePrevMonth}
                   disabled={isPrevMonthDisabled}
-                  className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+                  className="p-2.5 rounded-full hover:bg-pink-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
                   aria-label="Previous month"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <span className="text-lg font-semibold text-gray-800">{displayDate.toLocaleString('default', { month: 'long' })} {displayYear}</span>
+                <span className="text-2xl font-bold text-gray-800 tracking-wide">{displayDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                 <button 
                     onClick={handleNextMonth} 
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2.5 rounded-full hover:bg-pink-100 transition-all duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
                     aria-label="Next month"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-sm text-gray-500">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
+            <div className="grid grid-cols-7 gap-1 text-center text-sm font-bold text-gray-500">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => <div key={day}>{day}</div>)}
             </div>
-            <div className="grid grid-cols-7 gap-1 mt-2">
+            <div className="grid grid-cols-7 gap-2 mt-2 place-items-center">
                 {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`}></div>)}
                 {Array.from({ length: daysInMonth }).map((_, day) => {
                     const dayNumber = day + 1;
                     const date = new Date(displayYear, displayMonth, dayNumber);
                     const isPast = date < today;
                     const isSelected = details.date?.toDateString() === date.toDateString();
+                    const isToday = today.toDateString() === date.toDateString();
 
                     return (
                         <button 
                             key={dayNumber}
                             disabled={isPast}
                             onClick={() => handleDateSelect(dayNumber)}
-                            className={`w-10 h-10 rounded-full transition-colors duration-200 ${
+                            className={`w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-500 ${
                                 isSelected 
-                                ? 'bg-pink-500 text-white' 
+                                ? 'bg-pink-500 text-white font-bold shadow-lg scale-110' 
                                 : isPast 
-                                ? 'text-gray-300 cursor-not-allowed' 
-                                : 'text-gray-700 hover:bg-pink-100'
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : isToday
+                                ? 'bg-pink-100 text-pink-600 font-bold hover:bg-pink-200 hover:scale-110'
+                                : 'text-gray-700 hover:bg-pink-100 hover:scale-110 hover:shadow-sm'
                             }`}
                         >
                             {dayNumber}
