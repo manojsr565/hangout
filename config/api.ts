@@ -1,8 +1,15 @@
 // API Configuration
+const getApiBaseUrl = () => {
+  // Force production URL for deployed app
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://hangout-fnc.azurewebsites.net/api';
+  }
+  // Use environment variable or fallback to production URL
+  return import.meta.env.VITE_API_BASE_URL || 'https://hangout-fnc.azurewebsites.net/api';
+};
+
 export const API_CONFIG = {
-  // For local development, use the Azure Functions local endpoint
-  // For production, this will be replaced with the actual Azure Function URL
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://hangout-fnc.azurewebsites.net/api',
+  baseUrl: getApiBaseUrl(),
   endpoints: {
     submitPlan: '/submitplan'
   },

@@ -15,7 +15,7 @@ const getFirstDayOfMonth = (month: number, year: number) => {
     return new Date(year, month, 1).getDay();
 };
 
-const SUGGESTED_TIMES = ['12:00 PM', '3:00 PM', '7:00 PM', 'Anytime'];
+const SUGGESTED_TIMES = ['10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '7:00 PM'];
 
 export const Planner: React.FC<PlannerProps> = ({ onComplete }) => {
   const [details, setDetails] = useState<PlanDetails>({

@@ -16,13 +16,17 @@ export class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${API_CONFIG.baseUrl}${endpoint}`;
-    
+
+    console.log('Making request to:', url);
+
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
       },
       ...options,
     };
+
+    console.log('Request options:', defaultOptions);
 
     try {
       const controller = new AbortController();
@@ -60,7 +64,7 @@ export class ApiService {
             error: 'timeout',
           };
         }
-        
+
         return {
           success: false,
           message: 'Network error occurred',
@@ -86,6 +90,10 @@ export class ApiService {
       customActivity: planDetails.customActivity || undefined,
       submittedAt: new Date().toISOString(),
     };
+
+    console.log('API Config:', API_CONFIG);
+    console.log('Submitting to:', `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.submitPlan}`);
+    console.log('Payload:', payload);
 
     return this.makeRequest<SubmissionResponse>(API_CONFIG.endpoints.submitPlan, {
       method: 'POST',
