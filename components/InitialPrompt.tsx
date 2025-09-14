@@ -23,7 +23,7 @@ export const InitialPrompt: React.FC<InitialPromptProps> = ({ onYes, onMaybe }) 
 
   return (
     <div className="flex flex-col items-center justify-center text-center p-4">
-      <img src="https://picsum.photos/seed/bear/200/200" alt="cute bear" className="w-48 h-48 rounded-full mb-8 shadow-lg" />
+      <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=200&h=200&fit=crop&crop=center" alt="romantic pier" className="w-48 h-48 rounded-full mb-8 shadow-lg object-cover" />
       <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-8">
         Would you go out with me?
       </h1>
