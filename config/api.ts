@@ -4,7 +4,7 @@ export const API_CONFIG = {
   // For production, this will be replaced with the actual Azure Function URL
   baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://hangout-fnc.azurewebsites.net/api',
   endpoints: {
-    submitPlan: '/submitPlan'
+    submitPlan: '/submitplan'
   },
   timeout: 10000, // 10 seconds
 };

@@ -1,9 +1,6 @@
 {
   "routes": [
-    {
-      "route": "/api/*",
-      "allowedRoles": ["anonymous"]
-    },
+
     {
       "route": "/assets/*"
     },
@@ -54,7 +51,7 @@
       "statusCode": 200
     },
     "401": {
-      "rewrite": "/index.html", 
+      "rewrite": "/index.html",
       "statusCode": 200
     },
     "403": {
