@@ -1,15 +1,66 @@
 
 import React from 'react';
-import type { PlanDetails } from '../types';
+import type { PlanDetails, SubmissionState } from '../types';
+import { SubmissionStatus } from '../types';
 import { HeartIcon } from './icons';
 
 interface FinalScreenProps {
   status: 'confirmed' | 'rejected' | 'maybe';
   planDetails?: PlanDetails;
+  submissionState?: SubmissionState;
   onYesFromMaybe?: () => void;
 }
 
-export const FinalScreen: React.FC<FinalScreenProps> = ({ status, planDetails, onYesFromMaybe }) => {
+export const FinalScreen: React.FC<FinalScreenProps> = ({ status, planDetails, submissionState, onYesFromMaybe }) => {
+  const renderSubmissionStatus = () => {
+    if (!submissionState) return null;
+
+    switch (submissionState.status) {
+      case SubmissionStatus.SUBMITTING:
+        return (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              <p className="text-sm text-blue-700">Submitting your plan...</p>
+            </div>
+          </div>
+        );
+      
+      case SubmissionStatus.SUCCESS:
+        return (
+          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700 font-medium">✅ Plan submitted successfully!</p>
+            {submissionState.submissionId && (
+              <p className="text-xs text-green-600 mt-1">
+                Submission ID: {submissionState.submissionId}
+              </p>
+            )}
+            {submissionState.emailSent && (
+              <p className="text-xs text-green-600 mt-1">
+                📧 Email notification sent!
+              </p>
+            )}
+          </div>
+        );
+      
+      case SubmissionStatus.ERROR:
+        return (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 font-medium">❌ Failed to submit plan</p>
+            <p className="text-xs text-red-600 mt-1">
+              {submissionState.message || 'An error occurred while submitting your plan'}
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Don't worry, your plan details are still saved locally!
+            </p>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   const renderContent = () => {
     switch (status) {
       case 'confirmed':
@@ -22,7 +73,7 @@ export const FinalScreen: React.FC<FinalScreenProps> = ({ status, planDetails, o
             <div className="animate-pulse">
                 <HeartIcon className="w-24 h-24 text-red-500" />
             </div>
-            <p className="mt-4 text-xs text-gray-400">(This is just a demo. Your response has been logged to the console!)</p>
+            {renderSubmissionStatus()}
           </>
         );
       case 'maybe':

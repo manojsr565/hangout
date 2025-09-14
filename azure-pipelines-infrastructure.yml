@@ -1,0 +1,161 @@
+# Azure DevOps Pipeline for Infrastructure Deployment
+# This pipeline manages Terraform infrastructure deployment
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - terraform/*
+    exclude:
+      - terraform/README.md
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - terraform/*
+
+variables:
+  # Terraform configuration
+  terraformVersion: '1.5.0'
+  terraformPath: 'terraform'
+  
+  # Azure configuration
+  azureServiceConnection: $(AZURE_SERVICE_CONNECTION)
+  resourceGroupName: 'rg-dating-planner'
+  storageAccountName: 'stdatingplannerterraform'
+  containerName: 'tfstate'
+  
+  # Environment
+  environment: 'prod'
+
+stages:
+  - stage: Plan
+    displayName: 'Terraform Plan'
+    jobs:
+      - job: TerraformPlan
+        displayName: 'Plan Infrastructure Changes'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(terraformVersion)
+          
+          - task: AzureCLI@2
+            displayName: 'Setup Terraform Backend'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Create storage account for Terraform state if it doesn't exist
+                az storage account create \
+                  --name $(storageAccountName) \
+                  --resource-group $(resourceGroupName) \
+                  --location "East US" \
+                  --sku Standard_LRS \
+                  --kind StorageV2 \
+                  --allow-blob-public-access false || true
+                
+                # Create container for Terraform state
+                az storage container create \
+                  --name $(containerName) \
+                  --account-name $(storageAccountName) || true
+          
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: $(terraformPath)
+              backendServiceArm: $(azureServiceConnection)
+              backendAzureRmResourceGroupName: $(resourceGroupName)
+              backendAzureRmStorageAccountName: $(storageAccountName)
+              backendAzureRmContainerName: $(containerName)
+              backendAzureRmKey: 'terraform.tfstate'
+          
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Validate'
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+              workingDirectory: $(terraformPath)
+          
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Plan'
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: $(terraformPath)
+              environmentServiceNameAzureRM: $(azureServiceConnection)
+              commandOptions: '-var="environment=$(environment)" -out=tfplan'
+          
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Terraform Plan'
+            inputs:
+              pathToPublish: '$(terraformPath)/tfplan'
+              artifactName: 'terraform-plan'
+              publishLocation: 'Container'
+
+  - stage: Apply
+    displayName: 'Terraform Apply'
+    dependsOn: Plan
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: TerraformApply
+        displayName: 'Apply Infrastructure Changes'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'infrastructure-production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+                
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download Terraform Plan'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'terraform-plan'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Init'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'init'
+                    workingDirectory: $(terraformPath)
+                    backendServiceArm: $(azureServiceConnection)
+                    backendAzureRmResourceGroupName: $(resourceGroupName)
+                    backendAzureRmStorageAccountName: $(storageAccountName)
+                    backendAzureRmContainerName: $(containerName)
+                    backendAzureRmKey: 'terraform.tfstate'
+                
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Apply'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'apply'
+                    workingDirectory: $(terraformPath)
+                    environmentServiceNameAzureRM: $(azureServiceConnection)
+                    commandOptions: '$(System.ArtifactsDirectory)/terraform-plan/tfplan'
+                
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Output'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'output'
+                    workingDirectory: $(terraformPath)
+                    environmentServiceNameAzureRM: $(azureServiceConnection)

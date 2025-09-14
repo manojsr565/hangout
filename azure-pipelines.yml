@@ -1,0 +1,217 @@
+# Azure DevOps Pipeline for Dating Planner App
+# This pipeline builds and deploys both the React frontend and Azure Functions backend
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - README.md
+      - docs/*
+      - .gitignore
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - README.md
+      - docs/*
+      - .gitignore
+
+variables:
+  # Build configuration
+  nodeVersion: '18.x'
+  buildConfiguration: 'Release'
+  
+  # Azure resource names (should match Terraform variables)
+  resourceGroupName: 'rg-dating-planner'
+  staticWebAppName: 'swa-dating-planner'
+  functionAppName: 'func-dating-planner'
+  
+  # Build paths
+  frontendPath: '.'
+  backendPath: 'api'
+  terraformPath: 'terraform'
+
+stages:
+  - stage: Build
+    displayName: 'Build Applications'
+    jobs:
+      - job: BuildFrontend
+        displayName: 'Build React Frontend'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - task: Cache@2
+            displayName: 'Cache npm dependencies'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: ~/.npm
+          
+          - script: |
+              npm ci
+            displayName: 'Install frontend dependencies'
+            workingDirectory: $(frontendPath)
+          
+          - script: |
+              npm run build
+            displayName: 'Build React app'
+            workingDirectory: $(frontendPath)
+          
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish frontend build artifacts'
+            inputs:
+              pathToPublish: '$(frontendPath)/dist'
+              artifactName: 'frontend-build'
+              publishLocation: 'Container'
+
+      - job: BuildBackend
+        displayName: 'Build Azure Functions Backend'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - task: Cache@2
+            displayName: 'Cache npm dependencies'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | $(backendPath)/package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: ~/.npm
+          
+          - script: |
+              npm ci
+            displayName: 'Install backend dependencies'
+            workingDirectory: $(backendPath)
+          
+          - script: |
+              npm run build
+            displayName: 'Build Azure Functions'
+            workingDirectory: $(backendPath)
+          
+          - script: |
+              npm test
+            displayName: 'Run backend tests'
+            workingDirectory: $(backendPath)
+          
+          - task: ArchiveFiles@2
+            displayName: 'Archive backend files'
+            inputs:
+              rootFolderOrFile: '$(backendPath)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+              replaceExistingArchive: true
+          
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish backend build artifacts'
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+              artifactName: 'backend-build'
+              publishLocation: 'Container'
+
+  - stage: Deploy
+    displayName: 'Deploy Applications'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployFrontend
+        displayName: 'Deploy to Static Web Apps'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download frontend artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'frontend-build'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy to Azure Static Web Apps'
+                  inputs:
+                    azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+                    app_location: '$(System.ArtifactsDirectory)/frontend-build'
+                    skip_app_build: true
+                    skip_api_build: true
+
+      - deployment: DeployBackend
+        displayName: 'Deploy Azure Functions'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download backend artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'backend-build'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                
+                - task: AzureFunctionApp@1
+                  displayName: 'Deploy Azure Functions'
+                  inputs:
+                    azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                    appType: 'functionAppLinux'
+                    appName: $(functionAppName)
+                    package: '$(System.ArtifactsDirectory)/backend-build/backend-$(Build.BuildId).zip'
+                    runtimeStack: 'NODE|18'
+                    deploymentMethod: 'zipDeploy'
+
+  - stage: Validate
+    displayName: 'Post-Deployment Validation'
+    dependsOn: Deploy
+    condition: succeeded()
+    jobs:
+      - job: SmokeTests
+        displayName: 'Run Smoke Tests'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - script: |
+              # Wait for deployment to be ready
+              sleep 30
+              
+              # Test Static Web App is accessible
+              echo "Testing Static Web App accessibility..."
+              curl -f -s -o /dev/null "https://$(staticWebAppName).azurestaticapps.net" || exit 1
+              echo "✓ Static Web App is accessible"
+              
+              # Test Function App health endpoint (if implemented)
+              echo "Testing Function App health..."
+              curl -f -s -o /dev/null "https://$(functionAppName).azurewebsites.net/api/health" || echo "⚠ Health endpoint not available (expected if not implemented)"
+              
+              echo "✓ Smoke tests completed successfully"
+            displayName: 'Run smoke tests'

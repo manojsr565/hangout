@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "WEBSITE_NODE_DEFAULT_VERSION": "~18",
+    "COMMUNICATION_SERVICES_CONNECTION_STRING": "endpoint=https://your-communication-service.communication.azure.com/;accesskey=your-access-key",
+    "EMAIL_FROM_ADDRESS": "DoNotReply@your-communication-service.azurecomm.net",
+    "EMAIL_TO_ADDRESS": "your-email@example.com",
+    "APPINSIGHTS_INSTRUMENTATIONKEY": "your-app-insights-key",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=your-app-insights-key;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/"
+  }
+}

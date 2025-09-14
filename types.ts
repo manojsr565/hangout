@@ -9,6 +9,13 @@ export enum Step {
   MAYBE,
 }
 
+export enum SubmissionStatus {
+  IDLE = 'idle',
+  SUBMITTING = 'submitting',
+  SUCCESS = 'success',
+  ERROR = 'error',
+}
+
 export interface Activity {
   id: string;
   name: string;
@@ -22,4 +29,12 @@ export interface PlanDetails {
   name: string;
   activities: string[];
   customActivity: string;
+}
+
+export interface SubmissionState {
+  status: SubmissionStatus;
+  message?: string;
+  submissionId?: string;
+  emailSent?: boolean;
+  error?: string;
 }

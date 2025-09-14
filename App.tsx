@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { PlanDetails } from './types';
-import { Step } from './types';
+import type { PlanDetails, SubmissionState } from './types';
+import { Step, SubmissionStatus } from './types';
 import { InitialPrompt } from './components/InitialPrompt';
 import { Planner } from './components/Planner';
 import { Summary } from './components/Summary';
 import { FinalScreen } from './components/FinalScreen';
+import { ApiService } from './services/apiService';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<Step>(Step.INITIAL);
@@ -15,14 +16,51 @@ const App: React.FC = () => {
     activities: [],
     customActivity: '',
   });
+  const [submissionState, setSubmissionState] = useState<SubmissionState>({
+    status: SubmissionStatus.IDLE,
+  });
+
+  const handlePlanSubmission = async () => {
+    setSubmissionState({ status: SubmissionStatus.SUBMITTING });
+    
+    try {
+      const response = await ApiService.submitPlan(planDetails);
+      
+      if (response.success && response.data) {
+        setSubmissionState({
+          status: SubmissionStatus.SUCCESS,
+          message: response.message,
+          submissionId: response.data.submissionId,
+          emailSent: response.data.emailSent,
+        });
+        console.log("Date Plan Submitted Successfully:", {
+          submissionId: response.data.submissionId,
+          emailSent: response.data.emailSent,
+        });
+      } else {
+        setSubmissionState({
+          status: SubmissionStatus.ERROR,
+          message: response.message || 'Failed to submit plan',
+          error: response.error,
+        });
+        console.error("Plan submission failed:", response);
+      }
+    } catch (error) {
+      setSubmissionState({
+        status: SubmissionStatus.ERROR,
+        message: 'An unexpected error occurred',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      console.error("Plan submission error:", error);
+    }
+  };
 
   useEffect(() => {
-    // For demonstration, log the plan when confirmed.
-    // In a real app, this is where you might send an email or save to a database.
-    if (step === Step.CONFIRMED) {
-      console.log("Date Plan Confirmed:", planDetails);
+    // Submit the plan when step changes to CONFIRMED
+    if (step === Step.CONFIRMED && submissionState.status === SubmissionStatus.IDLE) {
+      handlePlanSubmission();
     }
-  }, [step, planDetails]);
+  }, [step, submissionState.status]);
 
   const handlePlanCompletion = (details: PlanDetails) => {
     setPlanDetails(details);
@@ -40,7 +78,7 @@ const App: React.FC = () => {
       case Step.SUMMARY:
         return <Summary planDetails={planDetails} onConfirm={() => setStep(Step.CONFIRMED)} onEdit={() => setStep(Step.PLANNING)} />;
       case Step.CONFIRMED:
-        return <FinalScreen status="confirmed" planDetails={planDetails} />;
+        return <FinalScreen status="confirmed" planDetails={planDetails} submissionState={submissionState} />;
       case Step.REJECTED:
         return <FinalScreen status="rejected" />;
       default:
