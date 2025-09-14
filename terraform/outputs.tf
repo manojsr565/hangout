@@ -42,3 +42,13 @@ output "application_insights_connection_string" {
   value       = azurerm_application_insights.monitoring.connection_string
   sensitive   = true
 }
+
+output "email_service_name" {
+  description = "Name of the Email Communication Service"
+  value       = azurerm_email_communication_service.email_service.name
+}
+
+output "email_domain" {
+  description = "Email domain for sending notifications"
+  value       = azurerm_email_communication_service_domain.email_domain.mail_from_sender_domain
+}

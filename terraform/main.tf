@@ -125,7 +125,7 @@ resource "azurerm_linux_function_app" "api" {
     "APPINSIGHTS_INSTRUMENTATIONKEY"           = azurerm_application_insights.monitoring.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING"    = azurerm_application_insights.monitoring.connection_string
     "COMMUNICATION_SERVICES_CONNECTION_STRING" = azurerm_communication_service.email.primary_connection_string
-    "EMAIL_FROM_ADDRESS"                       = "DoNotReply@${azurerm_communication_service.email.name}.azurecomm.net"
+    "EMAIL_FROM_ADDRESS"                       = "DoNotReply@${azurerm_email_communication_service_domain.email_domain.mail_from_sender_domain}"
     "EMAIL_TO_ADDRESS"                         = var.notification_email
     "WEBSITE_RUN_FROM_PACKAGE"                 = "1"
     "WEBSITE_ENABLE_SYNC_UPDATE_SITE"          = "true"
@@ -142,6 +142,31 @@ resource "azurerm_communication_service" "email" {
   name                = var.communication_service_name
   resource_group_name = azurerm_resource_group.main.name
   data_location       = "United States"
+
+  tags = {
+    Environment = var.environment
+    Project     = "dating-planner"
+  }
+}
+
+# Create Email Communication Service
+resource "azurerm_email_communication_service" "email_service" {
+  name                = "${var.communication_service_name}-email"
+  resource_group_name = azurerm_resource_group.main.name
+  data_location       = "United States"
+
+  tags = {
+    Environment = var.environment
+    Project     = "dating-planner"
+  }
+}
+
+# Create Email Communication Service Domain (Azure Managed)
+resource "azurerm_email_communication_service_domain" "email_domain" {
+  name             = "AzureManagedDomain"
+  email_service_id = azurerm_email_communication_service.email_service.id
+
+  domain_management = "AzureManaged"
 
   tags = {
     Environment = var.environment
