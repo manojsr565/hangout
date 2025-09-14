@@ -2,7 +2,7 @@
 import React from 'react';
 import type { PlanDetails, SubmissionState } from '../types';
 import { SubmissionStatus } from '../types';
-import { HeartIcon } from './icons';
+import { LightningIcon } from './icons';
 
 interface FinalScreenProps {
   status: 'confirmed' | 'rejected' | 'maybe';
@@ -66,12 +66,14 @@ export const FinalScreen: React.FC<FinalScreenProps> = ({ status, planDetails, s
       case 'confirmed':
         return (
           <>
-            <h1 className="text-4xl md:text-5xl font-bold text-pink-500 mb-4">It's a DATE!</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-purple-600 mb-4">It's a PLAN! ⚡</h1>
             <p className="text-lg text-gray-700 mb-6">
-              Yay! I'm so excited to hang out with you, {planDetails?.name}. I'll be in touch!
+              Awesome! I'm excited to hang out with you, {planDetails?.name}. Let's make it epic!
             </p>
-            <div className="animate-pulse">
-                <HeartIcon className="w-24 h-24 text-red-500" />
+            <div className="animate-bounce">
+                <LightningIcon className="w-24 h-24 text-yellow-500" />
+                            {/* <div className="animate-pulse">
+                <HeartIcon className="w-24 h-24 text-red-500" /> */}
             </div>
             {renderSubmissionStatus()}
           </>

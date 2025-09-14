@@ -21,9 +21,8 @@ export const NO_BUTTON_PHRASES = [
     "No",
     "Are you sure?",
     "Really sure?",
-    "Please reconsider :(",
-    "Don't do this to me",
-    "I'm gonna cry...",
+    "Please reconsider!",
+    "Nooooooo!",
     "Okay, last chance!",
     "You're breaking my heart ;(",
 ];

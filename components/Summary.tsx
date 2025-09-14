@@ -68,7 +68,7 @@ export const Summary: React.FC<SummaryProps> = ({ planDetails, onConfirm, onEdit
           onClick={onConfirm}
           className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
         >
-          Yes, it's a date!
+          Yes, it's a plan!
         </button>
         <button 
           onClick={onEdit}
