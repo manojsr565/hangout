@@ -38,11 +38,20 @@ resource "azurerm_static_site" "app" {
   }
 }
 
+resource "azurerm_log_analytics_workspace" "log" {
+  name                = "hangoutapp-log"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
 # Create Application Insights
 resource "azurerm_application_insights" "monitoring" {
   name                = var.app_insights_name
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
+  workspace_id        = azurerm_log_analytics_workspace.log.id
   application_type    = "web"
 
   tags = {
@@ -94,32 +103,32 @@ resource "azurerm_linux_function_app" "api" {
       node_version = "18"
     }
     cors {
-      allowed_origins = ["*"]
+      allowed_origins     = ["*"]
       support_credentials = false
     }
-    ftps_state = "Disabled"
-    http2_enabled = true
-    minimum_tls_version = "1.2"
+    ftps_state              = "Disabled"
+    http2_enabled           = true
+    minimum_tls_version     = "1.2"
     scm_minimum_tls_version = "1.2"
-    use_32_bit_worker = false
-    
+    use_32_bit_worker       = false
+
     # Security headers
     app_service_logs {
-      disk_quota_mb = 35
+      disk_quota_mb         = 35
       retention_period_days = 7
     }
   }
 
   app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME"                = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION"            = "~18"
-    "APPINSIGHTS_INSTRUMENTATIONKEY"          = azurerm_application_insights.monitoring.instrumentation_key
-    "APPLICATIONINSIGHTS_CONNECTION_STRING"   = azurerm_application_insights.monitoring.connection_string
+    "FUNCTIONS_WORKER_RUNTIME"                 = "node"
+    "WEBSITE_NODE_DEFAULT_VERSION"             = "~18"
+    "APPINSIGHTS_INSTRUMENTATIONKEY"           = azurerm_application_insights.monitoring.instrumentation_key
+    "APPLICATIONINSIGHTS_CONNECTION_STRING"    = azurerm_application_insights.monitoring.connection_string
     "COMMUNICATION_SERVICES_CONNECTION_STRING" = azurerm_communication_service.email.primary_connection_string
-    "EMAIL_FROM_ADDRESS"                      = "DoNotReply@${azurerm_communication_service.email.name}.azurecomm.net"
-    "EMAIL_TO_ADDRESS"                        = var.notification_email
-    "WEBSITE_RUN_FROM_PACKAGE"                = "1"
-    "WEBSITE_ENABLE_SYNC_UPDATE_SITE"         = "true"
+    "EMAIL_FROM_ADDRESS"                       = "DoNotReply@${azurerm_communication_service.email.name}.azurecomm.net"
+    "EMAIL_TO_ADDRESS"                         = var.notification_email
+    "WEBSITE_RUN_FROM_PACKAGE"                 = "1"
+    "WEBSITE_ENABLE_SYNC_UPDATE_SITE"          = "true"
   }
 
   tags = {
