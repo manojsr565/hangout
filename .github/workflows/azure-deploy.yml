@@ -11,8 +11,8 @@ on:
 
 env:
   NODE_VERSION: '18.x'
-  AZURE_FUNCTIONAPP_NAME: 'func-dating-planner'
-  AZURE_STATICWEBAPP_NAME: 'swa-dating-planner'
+  AZURE_FUNCTIONAPP_NAME: 'hangout-fnc'
+  AZURE_STATICWEBAPP_NAME: 'hangout-app'
 
 jobs:
   build:
