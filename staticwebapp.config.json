@@ -5,6 +5,45 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/assets/*"
+    },
+    {
+      "route": "/*.js"
+    },
+    {
+      "route": "/*.css"
+    },
+    {
+      "route": "/*.png"
+    },
+    {
+      "route": "/*.jpg"
+    },
+    {
+      "route": "/*.jpeg"
+    },
+    {
+      "route": "/*.gif"
+    },
+    {
+      "route": "/*.svg"
+    },
+    {
+      "route": "/*.ico"
+    },
+    {
+      "route": "/*.woff"
+    },
+    {
+      "route": "/*.woff2"
+    },
+    {
+      "route": "/*.ttf"
+    },
+    {
+      "route": "/*.eot"
+    },
+    {
       "route": "/*",
       "rewrite": "/index.html"
     }
