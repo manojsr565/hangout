@@ -1,5 +1,5 @@
 {
-  "name": "will-you-go-out-with-me?",
+  "name": "will-you-go-out-with-me",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -34,7 +34,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/src/setupTests.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.ts"
+    ],
     "moduleNameMapping": {
       "\\.(css|less|scss|sass)$": "identity-obj-proxy"
     },

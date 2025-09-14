@@ -100,7 +100,7 @@ resource "azurerm_linux_function_app" "api" {
 
   site_config {
     application_stack {
-      node_version = "18"
+      node_version = "20"
     }
     cors {
       allowed_origins     = ["*"]
@@ -121,7 +121,7 @@ resource "azurerm_linux_function_app" "api" {
 
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"                 = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION"             = "~18"
+    "WEBSITE_NODE_DEFAULT_VERSION"             = "~20"
     "APPINSIGHTS_INSTRUMENTATIONKEY"           = azurerm_application_insights.monitoring.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING"    = azurerm_application_insights.monitoring.connection_string
     "COMMUNICATION_SERVICES_CONNECTION_STRING" = azurerm_communication_service.email.primary_connection_string
